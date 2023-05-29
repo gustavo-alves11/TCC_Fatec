@@ -15,9 +15,7 @@ class PessoaController {
         }
     static async cadastraPessoas(req, res){
         let pessoa = req.body
-        pessoa.senhaPessoa = await bcrypt.hash("123456", 8);
         try{
-            console.log(pessoa)
             const novaPessoaCriada = await database.pessoa.create(pessoa)
             return res.status(200).json(novaPessoaCriada)
         } catch(error) {
@@ -25,10 +23,10 @@ class PessoaController {
         }
     }
     static async buscaPorEmail(req, res){
-        const email = req.body.emailPessoa
+        const {id} = req.params
         try{
             const Pessoa = await database.pessoa.findOne( {where: {
-                emailPessoa : email}})
+                emailPessoa : id}})
             return res.status(200).json(Pessoa)
             
         }
@@ -61,7 +59,7 @@ class PessoaController {
             
             var token = jwt.sign({id: Pessoa.idPessoa}, "D62ST92Y7A6V7K5C6W9ZU6W8KS3", {
                 //expiresIn: 600 //10 min
-                expiresIn: 60 //1 min
+                expiresIn: 600 //1 min
                 //expiresIn: 3600
             });
             return res.send({Pessoa, token})//.json({
@@ -75,18 +73,34 @@ class PessoaController {
         }
     
     }
+
+    static async logout(req, res){
+      	res.json({ auth: false, token: null });
+    }
+    
     static async alterarPessoa(req,res){
         const {id} = req.params
         const Novasinfos = req.body
         try{
-            await database.pessoa.update(Novasinfos, {wher: {id: Number(id)}})
+            await database.pessoa.update(Novasinfos, {where: {idPessoa: Number(id)}})
             const pessoaAtualizada = await database.pessoa.findOne({where:{ 
-                id:Number(id)}})
+                idPessoa:Number(id)}})
                 return res.status(200).json(pessoaAtualizada)
         }catch(error){
             return res.status(500).json(error.message)
         }
 
+    }
+
+    static async removePessoa(req,res){
+        const {id} = req.params
+        try{
+            await database.pessoa.destroy({where:{ 
+                idPessoa:Number(id)}})
+            return res.status(200).json({message: `Pessoa removida com sucesso`})
+        }catch(error){
+            return res.status(500).json(error.message)
+        }
     }
     
 }
